@@ -22,12 +22,6 @@ export default function Home() {
           >
             Read the docs
           </Link>
-          <a
-            href="https://www.isportsapi.com/"
-            className="rounded-lg border border-neutral-700 px-5 py-2.5 font-medium hover:border-neutral-500"
-          >
-            Data source
-          </a>
         </div>
       </header>
 
