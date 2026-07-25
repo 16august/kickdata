@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KickData — Free Football Data API",
+  title: "KickData — API ข้อมูลฟุตบอลสำหรับนักพัฒนา",
   description:
-    "A free football data API with free leagues and Pro subscription tiers for more leagues and advanced data.",
+    "KickData คือ API ข้อมูลฟุตบอล — ดึงลีก ทีม นักเตะ และโปรแกรมการแข่งขันด้วยคำขอเดียว เริ่มใช้ฟรี",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="th">
       <body>{children}</body>
     </html>
   );
