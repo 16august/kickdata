@@ -15,11 +15,14 @@ export interface TierConfig {
 }
 
 export const TIERS: Record<Tier, TierConfig> = {
+  // TEMP: everything is open for free while we finalise packaging/pricing.
+  // To re-gate later, restore: dailyQuota 1_000, allPaidLeagues false,
+  // advancedData false.
   free: {
     label: "Free",
-    dailyQuota: 1_000,
-    allPaidLeagues: false,
-    advancedData: false,
+    dailyQuota: 100_000,
+    allPaidLeagues: true,
+    advancedData: true,
   },
   pro: {
     label: "Pro",

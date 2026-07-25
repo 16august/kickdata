@@ -55,9 +55,27 @@ export interface ISportsLeague {
   areaId?: number;
 }
 
+/** A team record as returned by iSportsAPI `GET /team?leagueId=`. */
+export interface ISportsTeam {
+  teamId: string;
+  leagueId: string;
+  name: string;
+  logo?: string;
+  foundingDate?: string;
+  address?: string;
+  area?: string;
+  venue?: string;
+  capacity?: number;
+  coach?: string;
+  website?: string;
+  isNational?: boolean;
+}
+
 export const isports = {
   /** Full league master list (~2,300 leagues). */
   leagues: () => get<ISportsLeague[]>("/league"),
+  /** Teams for a single league (by iSportsAPI league id). */
+  teams: (leagueId: string) => get<ISportsTeam[]>("/team", { leagueId }),
   // The two below are loose placeholders until fixtures/standings ingestion
   // is wired up — the current API key does not have access to them yet.
   schedule: (leagueId?: string) =>

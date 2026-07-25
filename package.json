@@ -14,7 +14,11 @@
     "db:migrate:prod": "dotenv -e .env.production.local -- drizzle-kit migrate",
     "db:studio": "dotenv -e .env.development.local -- drizzle-kit studio",
     "seed:leagues": "dotenv -e .env.development.local -- tsx scripts/seed-leagues.ts",
-    "seed:leagues:prod": "dotenv -e .env.production.local -- tsx scripts/seed-leagues.ts"
+    "seed:leagues:prod": "dotenv -e .env.production.local -- tsx scripts/seed-leagues.ts",
+    "seed:teams": "dotenv -e .env.development.local -- tsx scripts/seed-teams.ts",
+    "seed:teams:prod": "dotenv -e .env.production.local -- tsx scripts/seed-teams.ts",
+    "key:create": "dotenv -e .env.development.local -- tsx scripts/create-key.ts",
+    "key:create:prod": "dotenv -e .env.production.local -- tsx scripts/create-key.ts"
   },
   "dependencies": {
     "next": "^15.1.0",

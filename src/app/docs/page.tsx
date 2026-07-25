@@ -8,13 +8,18 @@ const ENDPOINTS = [
   },
   {
     method: "GET",
+    path: "/api/v1/teams?league=<id>",
+    desc: "List all teams in a league. `league` is the id from /api/v1/leagues.",
+  },
+  {
+    method: "GET",
     path: "/api/v1/fixtures?league=<id>",
-    desc: "List fixtures (matches) for a league.",
+    desc: "List fixtures (matches) for a league. (coming soon)",
   },
   {
     method: "GET",
     path: "/api/v1/standings?league=<id>",
-    desc: "League table / standings.",
+    desc: "League table / standings. (coming soon)",
   },
 ];
 
@@ -57,6 +62,22 @@ export default function Docs() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold">Example: teams in a league</h2>
+        <p className="mt-2 text-neutral-300">
+          Two steps — find the league id, then list its teams.
+        </p>
+        <pre className="mt-4 overflow-x-auto rounded-lg bg-black/40 p-4 text-sm">
+          {`# 1. Find the league id (e.g. English Premier League)
+curl https://kickdata.dev/api/v1/leagues \\
+  -H "x-api-key: YOUR_API_KEY"
+
+# 2. List all teams in that league
+curl "https://kickdata.dev/api/v1/teams?league=1639" \\
+  -H "x-api-key: YOUR_API_KEY"`}
+        </pre>
       </section>
 
       <section className="mt-10">

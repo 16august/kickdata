@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { env, APP_ENV } from "@/lib/env";
-import { syncLeagues } from "@/lib/isports/sync";
+import { syncLeagues, syncTeams } from "@/lib/isports/sync";
 
 export const runtime = "nodejs";
 // Give the sync job room to run on Vercel.
@@ -23,7 +23,8 @@ export async function GET(req: Request) {
 
   try {
     const leagues = await syncLeagues();
-    return NextResponse.json({ ok: true, env: APP_ENV, leagues });
+    const teams = await syncTeams();
+    return NextResponse.json({ ok: true, env: APP_ENV, leagues, teams });
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : "sync failed" },

@@ -82,12 +82,24 @@ export const teams = pgTable(
   {
     id: serial("id").primaryKey(),
     isportsTeamId: text("isports_team_id").notNull(),
+    // The league this team belongs to (its primary league from iSportsAPI).
+    leagueId: integer("league_id").references(() => leagues.id, {
+      onDelete: "set null",
+    }),
+    isportsLeagueId: text("isports_league_id"),
     name: text("name").notNull(),
     logo: text("logo"),
     country: text("country"),
+    venue: text("venue"),
+    coach: text("coach"),
+    foundingDate: text("founding_date"),
+    website: text("website"),
+    capacity: integer("capacity"),
+    isNational: boolean("is_national"),
   },
   (t) => ({
     isportsIdx: uniqueIndex("teams_isports_id_idx").on(t.isportsTeamId),
+    leagueIdx: index("teams_league_idx").on(t.leagueId),
   })
 );
 

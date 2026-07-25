@@ -1,6 +1,6 @@
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { leagues } from "@/lib/db/schema";
+import { leagues, teams } from "@/lib/db/schema";
 import { isports } from "@/lib/isports/client";
 import { isFreeLeague } from "@/lib/tiers";
 
@@ -61,4 +61,73 @@ export async function syncLeagues(): Promise<SyncLeaguesResult> {
   }
 
   return { total: rows.length, upserted, free };
+}
+
+export interface SyncTeamsResult {
+  leagues: number;
+  upserted: number;
+}
+
+/**
+ * Syncs teams for the free leagues (one iSportsAPI call per league — the
+ * "all teams" endpoint returns ~16MB and times out). Teams are linked back to
+ * their internal league id and enriched with the league's country.
+ */
+export async function syncTeams(): Promise<SyncTeamsResult> {
+  // Only the free leagues have team data worth syncing on the current key.
+  const freeLeagues = await db
+    .select({
+      id: leagues.id,
+      isportsLeagueId: leagues.isportsLeagueId,
+      country: leagues.country,
+    })
+    .from(leagues)
+    .where(eq(leagues.isFree, true));
+
+  let upserted = 0;
+  for (const league of freeLeagues) {
+    const rows = await isports.teams(league.isportsLeagueId);
+
+    const values = rows
+      .filter((t) => t.teamId && t.name)
+      .map((t) => ({
+        isportsTeamId: t.teamId,
+        leagueId: league.id,
+        isportsLeagueId: league.isportsLeagueId,
+        name: t.name,
+        logo: t.logo || null,
+        country: league.country || null,
+        venue: t.venue || null,
+        coach: t.coach || null,
+        foundingDate: t.foundingDate || null,
+        website: t.website || null,
+        capacity: typeof t.capacity === "number" ? t.capacity : null,
+        isNational: typeof t.isNational === "boolean" ? t.isNational : null,
+      }));
+
+    if (values.length === 0) continue;
+
+    await db
+      .insert(teams)
+      .values(values)
+      .onConflictDoUpdate({
+        target: teams.isportsTeamId,
+        set: {
+          leagueId: sql`excluded.league_id`,
+          isportsLeagueId: sql`excluded.isports_league_id`,
+          name: sql`excluded.name`,
+          logo: sql`excluded.logo`,
+          country: sql`excluded.country`,
+          venue: sql`excluded.venue`,
+          coach: sql`excluded.coach`,
+          foundingDate: sql`excluded.founding_date`,
+          website: sql`excluded.website`,
+          capacity: sql`excluded.capacity`,
+          isNational: sql`excluded.is_national`,
+        },
+      });
+    upserted += values.length;
+  }
+
+  return { leagues: freeLeagues.length, upserted };
 }
