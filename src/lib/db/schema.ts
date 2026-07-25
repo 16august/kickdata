@@ -113,10 +113,17 @@ export const fixtures = pgTable(
       .references(() => leagues.id, { onDelete: "cascade" }),
     homeTeamId: integer("home_team_id").references(() => teams.id),
     awayTeamId: integer("away_team_id").references(() => teams.id),
+    // Denormalised names so a fixture is self-contained even if a team
+    // isn't in our teams table.
+    homeName: text("home_name"),
+    awayName: text("away_name"),
     kickoff: timestamp("kickoff", { withTimezone: true }),
+    // iSportsAPI status code (0 = not started, negatives = finished/cancelled).
     status: text("status"),
     scoreHome: integer("score_home"),
     scoreAway: integer("score_away"),
+    round: text("round"),
+    season: text("season"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -124,6 +131,35 @@ export const fixtures = pgTable(
   (t) => ({
     isportsIdx: uniqueIndex("fixtures_isports_id_idx").on(t.isportsMatchId),
     leagueIdx: index("fixtures_league_idx").on(t.leagueId),
+  })
+);
+
+export const players = pgTable(
+  "players",
+  {
+    id: serial("id").primaryKey(),
+    // recordId is unique per team-player entry in iSportsAPI.
+    isportsRecordId: text("isports_record_id").notNull(),
+    isportsPlayerId: text("isports_player_id"),
+    teamId: integer("team_id").references(() => teams.id, {
+      onDelete: "set null",
+    }),
+    isportsTeamId: text("isports_team_id"),
+    name: text("name").notNull(),
+    position: text("position"),
+    number: integer("number"),
+    birthday: text("birthday"),
+    height: integer("height"),
+    weight: integer("weight"),
+    country: text("country"),
+    feet: text("feet"),
+    photo: text("photo"),
+    marketValue: integer("market_value"),
+    contractEndDate: text("contract_end_date"),
+  },
+  (t) => ({
+    recordIdx: uniqueIndex("players_record_id_idx").on(t.isportsRecordId),
+    teamIdx: index("players_team_idx").on(t.teamId),
   })
 );
 

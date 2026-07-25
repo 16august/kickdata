@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { fixtures, leagues } from "@/lib/db/schema";
 import { guard, errorResponse } from "@/lib/api/guard";
@@ -39,14 +39,17 @@ export async function GET(req: Request) {
   const rows = await db
     .select()
     .from(fixtures)
-    .where(and(eq(fixtures.leagueId, leagueId)));
+    .where(and(eq(fixtures.leagueId, leagueId)))
+    .orderBy(asc(fixtures.kickoff));
 
   const data = rows.map((f) => ({
     id: f.id,
+    round: f.round,
+    season: f.season,
     kickoff: f.kickoff,
     status: f.status,
-    homeTeamId: f.homeTeamId,
-    awayTeamId: f.awayTeamId,
+    home: { teamId: f.homeTeamId, name: f.homeName },
+    away: { teamId: f.awayTeamId, name: f.awayName },
     score: { home: f.scoreHome, away: f.scoreAway },
   }));
 

@@ -17,6 +17,10 @@
     "seed:leagues:prod": "dotenv -e .env.production.local -- tsx scripts/seed-leagues.ts",
     "seed:teams": "dotenv -e .env.development.local -- tsx scripts/seed-teams.ts",
     "seed:teams:prod": "dotenv -e .env.production.local -- tsx scripts/seed-teams.ts",
+    "seed:fixtures": "dotenv -e .env.development.local -- tsx scripts/seed-fixtures.ts",
+    "seed:fixtures:prod": "dotenv -e .env.production.local -- tsx scripts/seed-fixtures.ts",
+    "seed:players": "dotenv -e .env.development.local -- tsx scripts/seed-players.ts",
+    "seed:players:prod": "dotenv -e .env.production.local -- tsx scripts/seed-players.ts",
     "key:create": "dotenv -e .env.development.local -- tsx scripts/create-key.ts",
     "key:create:prod": "dotenv -e .env.production.local -- tsx scripts/create-key.ts"
   },

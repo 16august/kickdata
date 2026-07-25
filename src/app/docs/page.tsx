@@ -13,8 +13,13 @@ const ENDPOINTS = [
   },
   {
     method: "GET",
+    path: "/api/v1/players?team=<id>",
+    desc: "List players (and coach) for a team. `team` is the id from /api/v1/teams.",
+  },
+  {
+    method: "GET",
     path: "/api/v1/fixtures?league=<id>",
-    desc: "List fixtures (matches) for a league. (coming soon)",
+    desc: "List fixtures (schedule & results) for a league.",
   },
   {
     method: "GET",

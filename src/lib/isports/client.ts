@@ -14,6 +14,18 @@ interface ISportsResponse<T> {
   data: T;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Minimum spacing between consecutive iSportsAPI calls (their limit is strict).
+const MIN_INTERVAL_MS = 1300;
+let lastCallAt = 0;
+
+async function throttle() {
+  const wait = lastCallAt + MIN_INTERVAL_MS - Date.now();
+  if (wait > 0) await sleep(wait);
+  lastCallAt = Date.now();
+}
+
 async function get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${env().ISPORTS_BASE_URL}${path}`);
   url.searchParams.set("api_key", env().ISPORTS_API_KEY);
@@ -21,20 +33,27 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
     url.searchParams.set(k, v);
   }
 
-  const res = await fetch(url, {
-    // We ingest into our own DB, so never cache at the fetch layer.
-    cache: "no-store",
-  });
+  // Proactive spacing + retry-with-backoff when the API asks us to slow down
+  // (code 2 + "frequency"/"slow down" message).
+  const MAX_RETRIES = 6;
+  for (let attempt = 0; ; attempt++) {
+    await throttle();
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`iSportsAPI HTTP ${res.status} for ${path}`);
+    }
 
-  if (!res.ok) {
-    throw new Error(`iSportsAPI HTTP ${res.status} for ${path}`);
-  }
+    const body = (await res.json()) as ISportsResponse<T>;
+    if (body.code === 0) return body.data;
 
-  const body = (await res.json()) as ISportsResponse<T>;
-  if (body.code !== 0) {
-    throw new Error(`iSportsAPI error ${body.code}: ${body.message ?? "unknown"}`);
+    const msg = body.message ?? "";
+    const rateLimited = /frequency|slow down/i.test(msg);
+    if (rateLimited && attempt < MAX_RETRIES) {
+      await sleep(3000 * (attempt + 1)); // 3s, 6s, 9s ... backoff
+      continue;
+    }
+    throw new Error(`iSportsAPI error ${body.code}: ${msg || "unknown"} (${path})`);
   }
-  return body.data;
 }
 
 /** A league record as returned by iSportsAPI `GET /league`. */
@@ -71,15 +90,47 @@ export interface ISportsTeam {
   isNational?: boolean;
 }
 
+/** A match record as returned by iSportsAPI `GET /schedule`. */
+export interface ISportsMatch {
+  matchId: string;
+  leagueId: string;
+  matchTime?: number; // unix seconds
+  status?: number;
+  homeId?: string;
+  homeName?: string;
+  awayId?: string;
+  awayName?: string;
+  homeScore?: number;
+  awayScore?: number;
+  round?: string;
+  season?: string;
+}
+
+/** A player record as returned by iSportsAPI `GET /player?teamId=`. */
+export interface ISportsPlayer {
+  recordId: string;
+  playerId: string;
+  teamId: string;
+  name: string;
+  position?: string;
+  number?: number;
+  birthday?: string;
+  height?: number;
+  weight?: number;
+  country?: string;
+  feet?: string;
+  photo?: string;
+  value?: number;
+  contractEndDate?: string;
+}
+
 export const isports = {
   /** Full league master list (~2,300 leagues). */
   leagues: () => get<ISportsLeague[]>("/league"),
   /** Teams for a single league (by iSportsAPI league id). */
   teams: (leagueId: string) => get<ISportsTeam[]>("/team", { leagueId }),
-  // The two below are loose placeholders until fixtures/standings ingestion
-  // is wired up — the current API key does not have access to them yet.
-  schedule: (leagueId?: string) =>
-    get<unknown[]>("/schedule/basic", leagueId ? { leagueId } : {}),
-  standings: (leagueId: string) =>
-    get<unknown>("/table/live", { leagueId }),
+  /** Schedule & results for a league (fixtures for the current season). */
+  schedule: (leagueId: string) => get<ISportsMatch[]>("/schedule", { leagueId }),
+  /** Players (squad + coach) for a single team. */
+  players: (teamId: string) => get<ISportsPlayer[]>("/player", { teamId }),
 };
