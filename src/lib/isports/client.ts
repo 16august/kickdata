@@ -124,6 +124,31 @@ export interface ISportsPlayer {
   contractEndDate?: string;
 }
 
+/** A single standings row as returned by iSportsAPI `GET /standing/league`. */
+export interface ISportsStandingRow {
+  teamId: string;
+  rank?: number;
+  totalCount?: number; // matches played
+  winCount?: number;
+  drawCount?: number;
+  loseCount?: number;
+  getScore?: number; // goals for
+  loseScore?: number; // goals against
+  goalDifference?: number;
+  integral?: number; // total points
+}
+
+/**
+ * The `GET /standing/league` response. iSportsAPI returns several breakdowns;
+ * we only ingest `totalStandings` (the overall table).
+ */
+export interface ISportsStanding {
+  leagueId?: string;
+  totalStandings?: ISportsStandingRow[];
+  homeStandings?: ISportsStandingRow[];
+  awayStandings?: ISportsStandingRow[];
+}
+
 export const isports = {
   /** Full league master list (~2,300 leagues). */
   leagues: () => get<ISportsLeague[]>("/league"),
@@ -133,4 +158,6 @@ export const isports = {
   schedule: (leagueId: string) => get<ISportsMatch[]>("/schedule", { leagueId }),
   /** Players (squad + coach) for a single team. */
   players: (teamId: string) => get<ISportsPlayer[]>("/player", { teamId }),
+  /** League table (overall standings) for a single league. */
+  standings: (leagueId: string) => get<ISportsStanding>("/standing/league", { leagueId }),
 };

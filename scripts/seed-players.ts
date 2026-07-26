@@ -7,10 +7,10 @@
  *   npm run seed:players:prod   # prod
  */
 import { syncPlayers } from "@/lib/isports/sync";
-import { APP_ENV } from "@/lib/env";
+import { SEED_ENV } from "@/lib/env";
 
 async function main() {
-  console.log(`Seeding players into ${APP_ENV} database...`);
+  console.log(`Seeding players into ${SEED_ENV} database...`);
   const res = await syncPlayers();
   console.log(`✓ done — ${res.upserted} players across ${res.teams} teams`);
 }

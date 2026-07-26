@@ -13,6 +13,14 @@ export const APP_ENV: "dev" | "prod" =
 export const isProd = APP_ENV === "prod";
 export const isDev = APP_ENV === "dev";
 
+/**
+ * Label for the database a CLI seed script is writing to. `APP_ENV` is derived
+ * from Vercel and is always "dev" during local CLI runs, so the seed npm
+ * scripts set `SEED_ENV` explicitly via their `.env.*.local` file. Falls back
+ * to `APP_ENV` when unset (e.g. a script run outside the npm wrappers).
+ */
+export const SEED_ENV: string = process.env.SEED_ENV ?? APP_ENV;
+
 const envSchema = z.object({
   DATABASE_URL: z.string().url("DATABASE_URL must be a valid connection URL"),
   ISPORTS_API_KEY: z.string().min(1, "ISPORTS_API_KEY is required"),

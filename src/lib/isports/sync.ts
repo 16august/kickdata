@@ -1,6 +1,6 @@
 import { sql, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { leagues, teams, fixtures, players } from "@/lib/db/schema";
+import { leagues, teams, fixtures, players, standings } from "@/lib/db/schema";
 import { isports } from "@/lib/isports/client";
 import { isFreeLeague } from "@/lib/tiers";
 
@@ -275,4 +275,85 @@ export async function syncPlayers(): Promise<SyncPlayersResult> {
   }
 
   return { teams: freeTeams.length, upserted };
+}
+
+export interface SyncStandingsResult {
+  leagues: number;
+  upserted: number;
+  skipped: string[];
+}
+
+/**
+ * Syncs league tables (overall standings) for the free leagues, one call per
+ * league. Rows are keyed on (leagueId, teamId); a row is skipped when its
+ * iSportsAPI team id isn't in our teams table (standings.team_id is required).
+ *
+ * Some leagues have no conventional table (e.g. the current UEFA Champions
+ * League format) and make iSportsAPI return an error — those are skipped so one
+ * bad league doesn't abort the whole sync.
+ */
+export async function syncStandings(): Promise<SyncStandingsResult> {
+  const freeLeagues = await db
+    .select({ id: leagues.id, isportsLeagueId: leagues.isportsLeagueId })
+    .from(leagues)
+    .where(eq(leagues.isFree, true));
+
+  const teamMap = await teamIdMap();
+
+  let upserted = 0;
+  const skipped: string[] = [];
+  for (const league of freeLeagues) {
+    let table;
+    try {
+      table = await isports.standings(league.isportsLeagueId);
+    } catch {
+      skipped.push(league.isportsLeagueId);
+      continue;
+    }
+    const rows = table.totalStandings ?? [];
+
+    const values = rows
+      .map((r) => {
+        const teamId = r.teamId ? teamMap.get(r.teamId) : undefined;
+        if (teamId == null) return null;
+        return {
+          leagueId: league.id,
+          teamId,
+          rank: typeof r.rank === "number" ? r.rank : null,
+          played: typeof r.totalCount === "number" ? r.totalCount : null,
+          win: typeof r.winCount === "number" ? r.winCount : null,
+          draw: typeof r.drawCount === "number" ? r.drawCount : null,
+          loss: typeof r.loseCount === "number" ? r.loseCount : null,
+          goalsFor: typeof r.getScore === "number" ? r.getScore : null,
+          goalsAgainst: typeof r.loseScore === "number" ? r.loseScore : null,
+          goalDifference: typeof r.goalDifference === "number" ? r.goalDifference : null,
+          points: typeof r.integral === "number" ? r.integral : null,
+        };
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+
+    if (values.length === 0) continue;
+
+    await db
+      .insert(standings)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [standings.leagueId, standings.teamId],
+        set: {
+          rank: sql`excluded.rank`,
+          played: sql`excluded.played`,
+          win: sql`excluded.win`,
+          draw: sql`excluded.draw`,
+          loss: sql`excluded.loss`,
+          goalsFor: sql`excluded.goals_for`,
+          goalsAgainst: sql`excluded.goals_against`,
+          goalDifference: sql`excluded.goal_difference`,
+          points: sql`excluded.points`,
+          updatedAt: sql`now()`,
+        },
+      });
+    upserted += values.length;
+  }
+
+  return { leagues: freeLeagues.length, upserted, skipped };
 }

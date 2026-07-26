@@ -41,6 +41,7 @@ export const openapi = {
     { name: "Teams" },
     { name: "Players" },
     { name: "Fixtures" },
+    { name: "Standings" },
   ],
   paths: {
     "/api/v1/leagues": {
@@ -161,6 +162,39 @@ export const openapi = {
         },
       },
     },
+    "/api/v1/standings": {
+      get: {
+        tags: ["Standings"],
+        summary: "League table",
+        description: "Overall standings for a league, ordered by rank.",
+        parameters: [
+          {
+            name: "league",
+            in: "query",
+            required: true,
+            description: "League id (from /api/v1/leagues).",
+            schema: { type: "integer", example: 30 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "OK",
+            content: {
+              "application/json": {
+                schema: okList("#/components/schemas/Standing", {
+                  league: { type: "string", example: "English Premier League" },
+                }),
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -266,6 +300,27 @@ export const openapi = {
               away: { type: "integer", nullable: true },
             },
           },
+        },
+      },
+      Standing: {
+        type: "object",
+        properties: {
+          rank: { type: "integer", example: 1 },
+          team: {
+            type: "object",
+            properties: {
+              id: { type: "integer", example: 112 },
+              name: { type: "string", nullable: true, example: "Arsenal" },
+            },
+          },
+          played: { type: "integer", example: 38 },
+          win: { type: "integer", example: 28 },
+          draw: { type: "integer", example: 6 },
+          loss: { type: "integer", example: 4 },
+          goalsFor: { type: "integer", example: 91 },
+          goalsAgainst: { type: "integer", example: 29 },
+          goalDifference: { type: "integer", example: 62 },
+          points: { type: "integer", example: 90 },
         },
       },
     },

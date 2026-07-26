@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { standings, leagues } from "@/lib/db/schema";
+import { standings, leagues, teams } from "@/lib/db/schema";
 import { guard, errorResponse } from "@/lib/api/guard";
 import { getTierConfig } from "@/lib/tiers";
 
@@ -36,18 +36,34 @@ export async function GET(req: Request) {
   }
 
   const rows = await db
-    .select()
+    .select({
+      rank: standings.rank,
+      teamId: standings.teamId,
+      teamName: teams.name,
+      played: standings.played,
+      win: standings.win,
+      draw: standings.draw,
+      loss: standings.loss,
+      goalsFor: standings.goalsFor,
+      goalsAgainst: standings.goalsAgainst,
+      goalDifference: standings.goalDifference,
+      points: standings.points,
+    })
     .from(standings)
+    .leftJoin(teams, eq(standings.teamId, teams.id))
     .where(eq(standings.leagueId, leagueId))
     .orderBy(asc(standings.rank));
 
   const data = rows.map((s) => ({
     rank: s.rank,
-    teamId: s.teamId,
+    team: { id: s.teamId, name: s.teamName },
     played: s.played,
     win: s.win,
     draw: s.draw,
     loss: s.loss,
+    goalsFor: s.goalsFor,
+    goalsAgainst: s.goalsAgainst,
+    goalDifference: s.goalDifference,
     points: s.points,
   }));
 

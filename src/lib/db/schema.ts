@@ -178,6 +178,9 @@ export const standings = pgTable(
     win: integer("win"),
     draw: integer("draw"),
     loss: integer("loss"),
+    goalsFor: integer("goals_for"),
+    goalsAgainst: integer("goals_against"),
+    goalDifference: integer("goal_difference"),
     points: integer("points"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

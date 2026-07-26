@@ -11,7 +11,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
 import { apiKeys } from "@/lib/db/schema";
 import { hashKey } from "@/lib/auth/apiKey";
-import { APP_ENV } from "@/lib/env";
+import { SEED_ENV } from "@/lib/env";
 
 async function main() {
   const [ownerEmail = "owner@kickdata.dev", tierArg = "free"] =
@@ -23,7 +23,7 @@ async function main() {
 
   await db.insert(apiKeys).values({ keyHash, ownerEmail, tier });
 
-  console.log(`✓ API key created in ${APP_ENV} database`);
+  console.log(`✓ API key created in ${SEED_ENV} database`);
   console.log(`  owner: ${ownerEmail}`);
   console.log(`  tier:  ${tier}`);
   console.log("");

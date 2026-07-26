@@ -21,6 +21,8 @@
     "seed:fixtures:prod": "dotenv -e .env.production.local -- tsx scripts/seed-fixtures.ts",
     "seed:players": "dotenv -e .env.development.local -- tsx scripts/seed-players.ts",
     "seed:players:prod": "dotenv -e .env.production.local -- tsx scripts/seed-players.ts",
+    "seed:standings": "dotenv -e .env.development.local -- tsx scripts/seed-standings.ts",
+    "seed:standings:prod": "dotenv -e .env.production.local -- tsx scripts/seed-standings.ts",
     "key:create": "dotenv -e .env.development.local -- tsx scripts/create-key.ts",
     "key:create:prod": "dotenv -e .env.production.local -- tsx scripts/create-key.ts"
   },

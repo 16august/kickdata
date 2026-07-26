@@ -5,10 +5,10 @@
  *   npm run seed:fixtures:prod   # prod
  */
 import { syncFixtures } from "@/lib/isports/sync";
-import { APP_ENV } from "@/lib/env";
+import { SEED_ENV } from "@/lib/env";
 
 async function main() {
-  console.log(`Seeding fixtures into ${APP_ENV} database...`);
+  console.log(`Seeding fixtures into ${SEED_ENV} database...`);
   const res = await syncFixtures();
   console.log(`✓ done — ${res.upserted} fixtures across ${res.leagues} free leagues`);
 }

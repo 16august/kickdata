@@ -7,10 +7,10 @@
  * Requires leagues to be seeded first (syncTeams reads free leagues from DB).
  */
 import { syncTeams } from "@/lib/isports/sync";
-import { APP_ENV } from "@/lib/env";
+import { SEED_ENV } from "@/lib/env";
 
 async function main() {
-  console.log(`Seeding teams into ${APP_ENV} database...`);
+  console.log(`Seeding teams into ${SEED_ENV} database...`);
   const res = await syncTeams();
   console.log(`✓ done — ${res.upserted} teams across ${res.leagues} free leagues`);
 }
