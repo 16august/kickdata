@@ -24,7 +24,8 @@
     "seed:standings": "dotenv -e .env.development.local -- tsx scripts/seed-standings.ts",
     "seed:standings:prod": "dotenv -e .env.production.local -- tsx scripts/seed-standings.ts",
     "key:create": "dotenv -e .env.development.local -- tsx scripts/create-key.ts",
-    "key:create:prod": "dotenv -e .env.production.local -- tsx scripts/create-key.ts"
+    "key:create:prod": "dotenv -e .env.production.local -- tsx scripts/create-key.ts",
+    "audit:isports": "dotenv -e .env.development.local -- tsx scripts/audit-isports.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
