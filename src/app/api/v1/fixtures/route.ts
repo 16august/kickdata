@@ -48,9 +48,19 @@ export async function GET(req: Request) {
     season: f.season,
     kickoff: f.kickoff,
     status: f.status,
+    location: f.location,
     home: { teamId: f.homeTeamId, name: f.homeName },
     away: { teamId: f.awayTeamId, name: f.awayName },
-    score: { home: f.scoreHome, away: f.scoreAway },
+    score: {
+      home: f.scoreHome,
+      away: f.scoreAway,
+      halftime: { home: f.scoreHomeHalf, away: f.scoreAwayHalf },
+    },
+    cards: {
+      home: { yellow: f.homeYellow, red: f.homeRed },
+      away: { yellow: f.awayYellow, red: f.awayRed },
+    },
+    corners: { home: f.homeCorner, away: f.awayCorner },
   }));
 
   return NextResponse.json({ league: league.name, count: data.length, data }, { headers: g.headers });

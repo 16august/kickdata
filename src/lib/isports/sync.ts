@@ -143,11 +143,14 @@ async function teamIdMap(): Promise<Map<string, number>> {
 export interface SyncFixturesResult {
   leagues: number;
   upserted: number;
+  skipped: string[];
 }
 
 /**
  * Syncs fixtures (schedule & results) for the free leagues, one call per
- * league. Home/away teams are linked to internal ids where known.
+ * league. Home/away teams are linked to internal ids where known. A league
+ * whose call fails (e.g. transient rate-limit) is skipped and reported so one
+ * bad league doesn't abort the whole sync.
  */
 export async function syncFixtures(): Promise<SyncFixturesResult> {
   const freeLeagues = await db
@@ -158,8 +161,15 @@ export async function syncFixtures(): Promise<SyncFixturesResult> {
   const teamMap = await teamIdMap();
 
   let upserted = 0;
+  const skipped: string[] = [];
   for (const league of freeLeagues) {
-    const rows = await isports.schedule(league.isportsLeagueId);
+    let rows;
+    try {
+      rows = await isports.schedule(league.isportsLeagueId);
+    } catch {
+      skipped.push(league.isportsLeagueId);
+      continue;
+    }
 
     const values = rows
       .filter((m) => m.matchId)
@@ -174,6 +184,15 @@ export async function syncFixtures(): Promise<SyncFixturesResult> {
         status: m.status != null ? String(m.status) : null,
         scoreHome: typeof m.homeScore === "number" ? m.homeScore : null,
         scoreAway: typeof m.awayScore === "number" ? m.awayScore : null,
+        scoreHomeHalf: typeof m.homeHalfScore === "number" ? m.homeHalfScore : null,
+        scoreAwayHalf: typeof m.awayHalfScore === "number" ? m.awayHalfScore : null,
+        homeYellow: typeof m.homeYellow === "number" ? m.homeYellow : null,
+        awayYellow: typeof m.awayYellow === "number" ? m.awayYellow : null,
+        homeRed: typeof m.homeRed === "number" ? m.homeRed : null,
+        awayRed: typeof m.awayRed === "number" ? m.awayRed : null,
+        homeCorner: typeof m.homeCorner === "number" ? m.homeCorner : null,
+        awayCorner: typeof m.awayCorner === "number" ? m.awayCorner : null,
+        location: m.location || null,
         round: m.round || null,
         season: m.season || league.season || null,
       }));
@@ -196,6 +215,15 @@ export async function syncFixtures(): Promise<SyncFixturesResult> {
             status: sql`excluded.status`,
             scoreHome: sql`excluded.score_home`,
             scoreAway: sql`excluded.score_away`,
+            scoreHomeHalf: sql`excluded.score_home_half`,
+            scoreAwayHalf: sql`excluded.score_away_half`,
+            homeYellow: sql`excluded.home_yellow`,
+            awayYellow: sql`excluded.away_yellow`,
+            homeRed: sql`excluded.home_red`,
+            awayRed: sql`excluded.away_red`,
+            homeCorner: sql`excluded.home_corner`,
+            awayCorner: sql`excluded.away_corner`,
+            location: sql`excluded.location`,
             round: sql`excluded.round`,
             season: sql`excluded.season`,
             updatedAt: sql`now()`,
@@ -205,7 +233,7 @@ export async function syncFixtures(): Promise<SyncFixturesResult> {
     }
   }
 
-  return { leagues: freeLeagues.length, upserted };
+  return { leagues: freeLeagues.length, upserted, skipped };
 }
 
 export interface SyncPlayersResult {

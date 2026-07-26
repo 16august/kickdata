@@ -102,6 +102,15 @@ export interface ISportsMatch {
   awayName?: string;
   homeScore?: number;
   awayScore?: number;
+  homeHalfScore?: number;
+  awayHalfScore?: number;
+  homeYellow?: number;
+  awayYellow?: number;
+  homeRed?: number;
+  awayRed?: number;
+  homeCorner?: number;
+  awayCorner?: number;
+  location?: string;
   round?: string;
   season?: string;
 }

@@ -122,6 +122,18 @@ export const fixtures = pgTable(
     status: text("status"),
     scoreHome: integer("score_home"),
     scoreAway: integer("score_away"),
+    // Half-time score.
+    scoreHomeHalf: integer("score_home_half"),
+    scoreAwayHalf: integer("score_away_half"),
+    // In-match tallies (from the schedule feed).
+    homeYellow: integer("home_yellow"),
+    awayYellow: integer("away_yellow"),
+    homeRed: integer("home_red"),
+    awayRed: integer("away_red"),
+    homeCorner: integer("home_corner"),
+    awayCorner: integer("away_corner"),
+    // Venue name for the match.
+    location: text("location"),
     round: text("round"),
     season: text("season"),
     updatedAt: timestamp("updated_at", { withTimezone: true })

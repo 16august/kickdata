@@ -11,6 +11,9 @@ async function main() {
   console.log(`Seeding fixtures into ${SEED_ENV} database...`);
   const res = await syncFixtures();
   console.log(`✓ done — ${res.upserted} fixtures across ${res.leagues} free leagues`);
+  if (res.skipped.length) {
+    console.log(`  (skipped ${res.skipped.length} league(s), e.g. rate-limited: ${res.skipped.join(", ")})`);
+  }
 }
 
 main()

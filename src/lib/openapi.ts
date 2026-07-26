@@ -279,6 +279,7 @@ export const openapi = {
           season: { type: "string", example: "2026-2027" },
           kickoff: { type: "string", format: "date-time" },
           status: { type: "string", example: "0" },
+          location: { type: "string", nullable: true, example: "Emirates Stadium" },
           home: {
             type: "object",
             properties: {
@@ -294,6 +295,39 @@ export const openapi = {
             },
           },
           score: {
+            type: "object",
+            properties: {
+              home: { type: "integer", nullable: true },
+              away: { type: "integer", nullable: true },
+              halftime: {
+                type: "object",
+                properties: {
+                  home: { type: "integer", nullable: true },
+                  away: { type: "integer", nullable: true },
+                },
+              },
+            },
+          },
+          cards: {
+            type: "object",
+            properties: {
+              home: {
+                type: "object",
+                properties: {
+                  yellow: { type: "integer", nullable: true },
+                  red: { type: "integer", nullable: true },
+                },
+              },
+              away: {
+                type: "object",
+                properties: {
+                  yellow: { type: "integer", nullable: true },
+                  red: { type: "integer", nullable: true },
+                },
+              },
+            },
+          },
+          corners: {
             type: "object",
             properties: {
               home: { type: "integer", nullable: true },
