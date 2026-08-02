@@ -132,15 +132,25 @@ export const openapi = {
     "/api/v1/fixtures": {
       get: {
         tags: ["Fixtures"],
-        summary: "List fixtures in a league",
-        description: "Schedule & results for the current season, ordered by kickoff.",
+        summary: "List fixtures by league or team",
+        description:
+          "Schedule & results for the current season, ordered by kickoff. " +
+          "Provide at least one of `league` or `team`. `team` returns every " +
+          "fixture that team plays (home or away); combine both to scope to one league.",
         parameters: [
           {
             name: "league",
             in: "query",
-            required: true,
-            description: "League id (from /api/v1/leagues).",
+            required: false,
+            description: "League id (from /api/v1/leagues). Optional if `team` is given.",
             schema: { type: "integer", example: 30 },
+          },
+          {
+            name: "team",
+            in: "query",
+            required: false,
+            description: "Team id (from /api/v1/teams). Returns that team's fixtures, home or away.",
+            schema: { type: "integer", example: 112 },
           },
         ],
         responses: {

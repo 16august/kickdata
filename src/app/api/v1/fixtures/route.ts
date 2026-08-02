@@ -1,45 +1,77 @@
 import { NextResponse } from "next/server";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, or, asc, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { fixtures, leagues } from "@/lib/db/schema";
+import { fixtures, leagues, teams } from "@/lib/db/schema";
 import { guard, errorResponse } from "@/lib/api/guard";
 import { getTierConfig } from "@/lib/tiers";
 
 export const runtime = "nodejs";
 
-// GET /api/v1/fixtures?league=<leagueId>
+// GET /api/v1/fixtures?league=<leagueId>&team=<teamId>
+// At least one of `league` or `team` is required. `team` returns every fixture
+// the team plays (home or away); combine with `league` to scope to one league.
 export async function GET(req: Request) {
   const g = await guard(req);
   if ("response" in g) return g.response;
 
   const { searchParams } = new URL(req.url);
   const leagueParam = searchParams.get("league");
-  if (!leagueParam) {
-    return errorResponse(400, "Query param `league` (league id) is required.");
-  }
-  const leagueId = Number(leagueParam);
-  if (!Number.isInteger(leagueId)) {
-    return errorResponse(400, "`league` must be a numeric league id.");
-  }
+  const teamParam = searchParams.get("team");
 
-  // Verify the league exists and is allowed for this tier.
-  const [league] = await db
-    .select()
-    .from(leagues)
-    .where(eq(leagues.id, leagueId))
-    .limit(1);
-
-  if (!league) return errorResponse(404, "League not found.");
+  if (!leagueParam && !teamParam) {
+    return errorResponse(400, "Provide at least one of `league` or `team` (id).");
+  }
 
   const tier = getTierConfig(g.key.tier);
-  if (!league.isFree && !tier.allPaidLeagues) {
-    return errorResponse(403, "This league requires a Pro subscription.");
+  const conditions: SQL[] = [];
+  const meta: { league?: string; team?: string } = {};
+
+  // --- team filter ---------------------------------------------------------
+  if (teamParam) {
+    const teamId = Number(teamParam);
+    if (!Number.isInteger(teamId)) {
+      return errorResponse(400, "`team` must be a numeric team id.");
+    }
+    const [team] = await db.select().from(teams).where(eq(teams.id, teamId)).limit(1);
+    if (!team) return errorResponse(404, "Team not found.");
+
+    // Tier-gate via the team's league.
+    if (team.leagueId) {
+      const [league] = await db
+        .select({ isFree: leagues.isFree })
+        .from(leagues)
+        .where(eq(leagues.id, team.leagueId))
+        .limit(1);
+      if (league && !league.isFree && !tier.allPaidLeagues) {
+        return errorResponse(403, "This team's league requires a Pro subscription.");
+      }
+    }
+
+    conditions.push(or(eq(fixtures.homeTeamId, teamId), eq(fixtures.awayTeamId, teamId))!);
+    meta.team = team.name;
+  }
+
+  // --- league filter -------------------------------------------------------
+  if (leagueParam) {
+    const leagueId = Number(leagueParam);
+    if (!Number.isInteger(leagueId)) {
+      return errorResponse(400, "`league` must be a numeric league id.");
+    }
+    const [league] = await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1);
+    if (!league) return errorResponse(404, "League not found.");
+
+    if (!league.isFree && !tier.allPaidLeagues) {
+      return errorResponse(403, "This league requires a Pro subscription.");
+    }
+
+    conditions.push(eq(fixtures.leagueId, leagueId));
+    meta.league = league.name;
   }
 
   const rows = await db
     .select()
     .from(fixtures)
-    .where(and(eq(fixtures.leagueId, leagueId)))
+    .where(and(...conditions))
     .orderBy(asc(fixtures.kickoff));
 
   const data = rows.map((f) => ({
@@ -63,5 +95,5 @@ export async function GET(req: Request) {
     corners: { home: f.homeCorner, away: f.awayCorner },
   }));
 
-  return NextResponse.json({ league: league.name, count: data.length, data }, { headers: g.headers });
+  return NextResponse.json({ ...meta, count: data.length, data }, { headers: g.headers });
 }
