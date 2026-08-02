@@ -5,6 +5,9 @@
  * Server is set to the canonical www host on purpose: the apex (kickdata.dev)
  * 308-redirects to www and the redirect drops the x-api-key header, which would
  * break the "Try it" client.
+ *
+ * In dev the route handler rewrites this list to the current origin so local
+ * docs exercise the local server — see src/app/api/openapi/route.ts.
  */
 
 const errorSchema = {
