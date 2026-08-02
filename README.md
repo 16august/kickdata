@@ -74,7 +74,7 @@ npm run db:migrate:dev    # apply ลง dev branch
 npm run db:migrate:prod   # apply ลง prod branch
 
 # 5. รัน dev server (โหลด .env.development.local อัตโนมัติ → ต่อ dev branch)
-npm run dev               # http://localhost:3000
+npm run dev               # http://localhost:3002
 ```
 
 ## การใช้งาน API
@@ -82,9 +82,9 @@ npm run dev               # http://localhost:3000
 ทุก request ต้องส่ง API key ผ่าน header `x-api-key`
 
 ```bash
-curl http://localhost:3000/api/v1/leagues -H "x-api-key: YOUR_KEY"
-curl "http://localhost:3000/api/v1/fixtures?league=1" -H "x-api-key: YOUR_KEY"
-curl "http://localhost:3000/api/v1/standings?league=1" -H "x-api-key: YOUR_KEY"
+curl http://localhost:3002/api/v1/leagues -H "x-api-key: YOUR_KEY"
+curl "http://localhost:3002/api/v1/fixtures?league=1" -H "x-api-key: YOUR_KEY"
+curl "http://localhost:3002/api/v1/standings?league=1" -H "x-api-key: YOUR_KEY"
 ```
 
 **Tiers** (แก้ได้ที่ [`src/lib/tiers.ts`](src/lib/tiers.ts))
@@ -106,7 +106,7 @@ curl "http://localhost:3000/api/v1/standings?league=1" -H "x-api-key: YOUR_KEY"
 `CRON_SECRET` เรียกเองได้ด้วย:
 
 ```bash
-curl http://localhost:3000/api/cron/sync -H "authorization: Bearer $CRON_SECRET"
+curl http://localhost:3002/api/cron/sync -H "authorization: Bearer $CRON_SECRET"
 ```
 
 > หมายเหตุ: ฟังก์ชัน fetch จาก iSportsAPI ต่อไว้แล้ว แต่ส่วน **transform + upsert
