@@ -4,6 +4,21 @@ import { leagues, teams, fixtures, players, standings } from "@/lib/db/schema";
 import { isports } from "@/lib/isports/client";
 import { isFreeLeague } from "@/lib/tiers";
 
+/**
+ * Coerces a feed number into something an `integer` column will accept.
+ *
+ * The player feed is not consistent about scale: most teams report market value
+ * as a whole number of thousands (12000) but some records come back as a
+ * decimal (7.5), and Postgres rejects those outright — one such row used to
+ * fail the entire players seed, which is why that table stayed empty.
+ */
+function int(v: unknown, opts: { positive?: boolean } = {}): number | null {
+  if (typeof v !== "number" || !Number.isFinite(v)) return null;
+  const n = Math.round(v);
+  if (opts.positive && n <= 0) return null;
+  return n;
+}
+
 export interface SyncLeaguesResult {
   total: number;
   upserted: number;
@@ -239,6 +254,7 @@ export async function syncFixtures(): Promise<SyncFixturesResult> {
 export interface SyncPlayersResult {
   teams: number;
   upserted: number;
+  skipped: string[];
 }
 
 /**
@@ -254,8 +270,20 @@ export async function syncPlayers(): Promise<SyncPlayersResult> {
     .where(eq(leagues.isFree, true));
 
   let upserted = 0;
+  const skipped: string[] = [];
   for (const team of freeTeams) {
-    const rows = await isports.players(team.isportsTeamId);
+    // One call per team over ~138 teams is by far the most rate-limit-exposed
+    // job here. Without this the first refusal aborts every remaining team and
+    // the whole run is lost; skipping one team costs only that team, and the
+    // upserts already committed stand. Re-running picks the stragglers back up.
+    let rows;
+    try {
+      rows = await isports.players(team.isportsTeamId);
+    } catch (err) {
+      console.error(`  ! team ${team.isportsTeamId} failed:`, err instanceof Error ? err.message : err);
+      skipped.push(team.isportsTeamId);
+      continue;
+    }
 
     const values = rows
       .filter((p) => p.recordId && p.name)
@@ -266,14 +294,14 @@ export async function syncPlayers(): Promise<SyncPlayersResult> {
         isportsTeamId: team.isportsTeamId,
         name: p.name,
         position: p.position || null,
-        number: typeof p.number === "number" && p.number > 0 ? p.number : null,
+        number: int(p.number, { positive: true }),
         birthday: p.birthday || null,
-        height: typeof p.height === "number" && p.height > 0 ? p.height : null,
-        weight: typeof p.weight === "number" && p.weight > 0 ? p.weight : null,
+        height: int(p.height, { positive: true }),
+        weight: int(p.weight, { positive: true }),
         country: p.country || null,
         feet: p.feet || null,
         photo: p.photo || null,
-        marketValue: typeof p.value === "number" ? p.value : null,
+        marketValue: int(p.value),
         contractEndDate: p.contractEndDate || null,
       }));
 
@@ -302,7 +330,7 @@ export async function syncPlayers(): Promise<SyncPlayersResult> {
     upserted += values.length;
   }
 
-  return { teams: freeTeams.length, upserted };
+  return { teams: freeTeams.length, upserted, skipped };
 }
 
 export interface SyncStandingsResult {

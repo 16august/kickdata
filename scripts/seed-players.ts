@@ -13,6 +13,12 @@ async function main() {
   console.log(`Seeding players into ${SEED_ENV} database...`);
   const res = await syncPlayers();
   console.log(`✓ done — ${res.upserted} players across ${res.teams} teams`);
+  if (res.skipped.length) {
+    console.log(
+      `  (skipped ${res.skipped.length} team(s), likely rate-limited: ${res.skipped.join(", ")})`
+    );
+    console.log("  re-run this script to pick them up — every write is an upsert");
+  }
 }
 
 main()
