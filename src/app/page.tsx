@@ -1,4 +1,6 @@
 import Link from "next/link";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 const features = [
   {
@@ -33,20 +35,7 @@ const stats = [
 export default function Home() {
   return (
     <div className="min-h-screen">
-      {/* Nav */}
-      <nav className="sticky top-0 z-10 border-b border-white/5 bg-pitch/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold tracking-tight">
-            KickData <span className="text-turf">⚽</span>
-          </span>
-          <Link
-            href="/docs"
-            className="text-sm font-medium text-neutral-300 hover:text-white"
-          >
-            เอกสาร
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -153,19 +142,7 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-neutral-500 sm:flex-row">
-          <span>
-            KickData <span className="text-turf">⚽</span> — API ข้อมูลฟุตบอลสำหรับนักพัฒนา
-          </span>
-          <div className="flex gap-6">
-            <Link href="/docs" className="hover:text-neutral-300">
-              เอกสาร
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
